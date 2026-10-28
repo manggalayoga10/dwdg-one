@@ -12,7 +12,8 @@ import { useSession, useWorkspace } from '@/lib/workspace/hooks';
 import { useParams } from 'react-router';
 import { InvitePublic } from '@/features/accounts/components/InvitePublic';
 import { Card, GoogleMark, LangSwitch, Mark, gbtn } from './SignInCard';
-import { signInWithGoogle, signOutEverywhere } from '../services/auth';
+import { inputClass } from '@/components/ui/forms';
+import { signInWithPassword, signOutEverywhere } from '../services/auth';
 import { BLOCKED_TEXT, isBlocked, demoPersonas, pickPersona, signOut } from '../services/session';
 
 export function SignIn() {
@@ -21,6 +22,9 @@ export function SignIn() {
   const people = db.people;
   const { page, id: routeId } = useParams();
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   if (env.demo && page === 'invite') return <InvitePublic id={routeId ?? ''} />;
   const blockedId = session.blocked ?? session.me;
   const blocked = people.find((p) => p.id === blockedId && isBlocked(p.status));
@@ -64,13 +68,15 @@ export function SignIn() {
   }
 
   const google = () => {
-    if (env.demo) {
-      setSession({ picking: true });
-      return;
-    }
+    setSession({ picking: true });
+  };
+
+  const submit = () => {
     setError(null);
-    signInWithGoogle().catch(() => {
-      setError(t('Could not sign in. Please try again.'));
+    setBusy(true);
+    signInWithPassword(email, password).catch(() => {
+      setError(t('Wrong e-mail or password.'));
+      setBusy(false);
     });
   };
 
@@ -115,10 +121,50 @@ export function SignIn() {
         </>
       ) : (
         <>
-          <button type="button" className={gbtn} onClick={google}>
-            <GoogleMark />
-            {t('Continue with Google')}
-          </button>
+          {env.demo ? (
+            <button type="button" className={gbtn} onClick={google}>
+              <GoogleMark />
+              {t('Continue with Google')}
+            </button>
+          ) : (
+            <form
+              className="mt-[18px] grid gap-2.5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit();
+              }}
+            >
+              <input
+                className={inputClass}
+                name="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
+                type="email"
+                autoComplete="username"
+                placeholder={t('E-mail')}
+                aria-label={t('E-mail')}
+                required
+              />
+              <input
+                className={inputClass}
+                name="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
+                type="password"
+                autoComplete="current-password"
+                placeholder={t('Password')}
+                aria-label={t('Password')}
+                required
+              />
+              <button type="submit" className={gbtn} disabled={busy}>
+                {t('Sign in')}
+              </button>
+            </form>
+          )}
           {error && <p className="mt-3 text-danger">{error}</p>}
           <p className="mt-4 type-small">{t('Ask your director for an invite if you don’t have one yet.')}</p>
         </>

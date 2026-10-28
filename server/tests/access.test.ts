@@ -126,18 +126,17 @@ describe('GET /api/audit', () => {
   const ask = (app: ReturnType<typeof make>['app'], token: string, query = '') => app.request(`/api/audit${query}`, { headers: { Authorization: `Bearer ${token}` } });
   const rows = [{ id: 2, at: '2026-10-17T01:00:00Z', person_id: 'hr_dir', division_id: null, action: 'access.change', detail: { table: 'acct_grants' } }];
 
-  it('lets the President and an Admin read it, newest first, 50 lines by default', async () => {
+  it('lets an Admin read it, newest first, 50 lines by default', async () => {
     const { app, hub } = make({ auditRows: rows });
-    for (const token of ['tok-pres', 'tok-adm']) {
-      const res = await ask(app, token);
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ rows });
-    }
-    expect(hub.calls.auditReads).toEqual([{ limit: 50 }, { limit: 50 }]);
+    const res = await ask(app, 'tok-adm');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ rows });
+    expect(hub.calls.auditReads).toEqual([{ limit: 50 }]);
   });
 
-  it('refuses everybody else, including a director who changed access themselves', async () => {
+  it('refuses everybody else, including the President and a director who changed access themselves', async () => {
     const { app, hub } = make({ auditRows: rows });
+    expect((await ask(app, 'tok-pres')).status).toBe(403);
     expect((await ask(app, 't')).status).toBe(403);
     expect((await ask(app, 'tok-mem')).status).toBe(403);
     expect((await ask(app, 'forged')).status).toBe(401);

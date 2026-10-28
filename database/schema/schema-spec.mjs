@@ -56,7 +56,7 @@ export const TABLES = [
     read: `from_person = ${ME} or to_person = ${ME} or app.is_top_or_admin()`},
   {name: 'projects', source: 'projects',
     cols: {div: 't', stage: 't', lead: 't', pm: 't', org: ['org', 'b'], created_by: 'createdBy', program: 't'}, fk: {program: 'programs'},
-    read: 'app.can_see_project(id)',
+    read: 'app.can_see_project_row(id, org, div, lead, pm, doc)',
     ins: `app.can_write() and app.rank() >= 2 and ${sees('div')}`,
     upd: `app.can_write() and ((app.rank() >= 2 and ${sees('div')}) or lead = ${ME} or pm = ${ME} or exists (select 1 from json_array_elements(coalesce(doc->'team', '[]'::json)) x where x->>'id' = ${ME}))`,
     del: `app.can_write() and app.rank() >= 2 and ${sees('div')}`},
@@ -164,7 +164,7 @@ export const TABLES = [
     read: `${NB} and (app.can_members() or person = ${ME})`, write: `${NB} and app.acct_manage()`},
   {name: 'acct_actions', source: 'acct.actions', positional: true, cols: {}, read: `${NB} and app.can_members()`, write: `${NB} and app.acct_manage()`},
   {name: 'acct_handovers', source: 'acct.handovers', cols: {}, read: `${NB} and app.is_top_or_admin()`, write: `${NB} and app.is_top_or_admin()`},
-  {name: 'acct_log', source: 'acct.log', cols: {actor: 't', person: 't'}, read: `${NB} and (app.me_admin() or app.me_role() = 'president')`, write: 'app.can_write()'},
+  {name: 'acct_log', source: 'acct.log', cols: {actor: 't', person: 't'}, read: `${NB} and app.me_admin()`, write: 'app.can_write()'},
   {name: 'acct_hidden', source: 'acct.hidden', cols: {}, read: `${NB} and app.can_members()`, write: `${NB} and app.acct_manage()`},
 
   // ---------- Performance and oversight ----------

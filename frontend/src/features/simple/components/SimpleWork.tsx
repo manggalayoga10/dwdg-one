@@ -48,7 +48,7 @@ function Inner({ me }: { me: Person }) {
           title={t('My tasks')}
           sub={`${WDL()[D(td).getDay()] ?? ''}, ${String(D(td).getDate())} ${MONTH()[D(td).getMonth()] ?? ''}`}
         />
-        <Card>
+        <Card className="overflow-visible">
           <QuickAdd inCard />
         </Card>
         <SimpleWaiting me={me} />

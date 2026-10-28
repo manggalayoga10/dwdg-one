@@ -352,7 +352,7 @@ export function SimpleProject({ id }: { id: string }) {
       ) : (
         <>
           {canAdd && (
-            <Card>
+            <Card className="overflow-visible">
               <QuickAdd inCard project={p.id} />
             </Card>
           )}

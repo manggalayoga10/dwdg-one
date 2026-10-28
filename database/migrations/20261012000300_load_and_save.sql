@@ -31,6 +31,22 @@ begin
   return app.apply_rows(p::json);
 end $$;
 
+-- move_rows: changes only pos, only of the records in ids (the ones the caller could read) and only when the record
+-- sent is identical to the stored one. Runs as its owner so a list can be re-ordered around records the caller may not edit.
+-- The app schema is not exposed through the API, so it can be reached only from apply_rows.
+create function app.move_rows(t text, rws json, ids text[]) returns integer language plpgsql security definer set search_path = '' as $$
+declare n integer;
+begin
+  execute format(
+    'update public.%I x set pos = coalesce((r->>''pos'')::integer, 0) from json_array_elements($1) r '
+    'where x.id = r->>''id'' and x.id = any ($2) and x.doc::text = (r->''doc'')::text '
+    'and x.pos is distinct from coalesce((r->>''pos'')::integer, 0)', t) using rws, ids;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+revoke all on function app.move_rows(text, json, text[]) from public, anon;
+grant execute on function app.move_rows(text, json, text[]) to authenticated, service_role;
+
 create function app.apply_rows(p json) returns json language plpgsql set search_path = '' as $$
 declare
   allowed text[] := array['people', 'tasks', 'offers', 'projects', 'milestones', 'blockers', 'decisions', 'meetings', 'unavailable', 'gbusy', 'resources', 'updates', 'changes', 'programs', 'routines', 'pins', 'hr_registers', 'hr_notices', 'hr_cycles', 'hr_assessments', 'hr_actions', 'hr_rounds', 'hr_packets', 'hr_onboarding_templates', 'hr_onboarding_instances', 'sng_initiatives', 'sng_packets', 'ee_orgs', 'ee_contacts', 'ee_interactions', 'ee_fu', 'ee_postpones', 'ee_opps', 'ee_handoffs', 'cons_engagements', 'cons_dlv', 'cons_staff', 'cons_kn', 'cons_cohorts', 'fnl_legal', 'fnl_register', 'fnl_allocations', 'fnl_requests', 'fnl_payments', 'fnl_incoming', 'fnl_periods', 'mcit_campaigns', 'mcit_content', 'mcit_briefs', 'mcit_it', 'mcit_accounts', 'acct_invites', 'acct_grants', 'acct_memberships', 'acct_actions', 'acct_handovers', 'acct_log', 'acct_hidden', 'perf_escalations', 'store_values'];
@@ -54,11 +70,17 @@ begin
       if left_over > 0 then raise exception 'Not allowed to delete % row(s) of %', left_over, t using errcode = '42501'; end if;
     end if;
     if spec->'upsert' is not null and json_typeof(spec->'upsert') = 'array' then
+      -- A record that is new or whose content changed goes through the table's policies.
       execute format(
         'insert into public.%I as x (id, pos, doc) select r->>''id'', coalesce((r->>''pos'')::integer, 0), r->''doc'' from json_array_elements($1) r '
         'on conflict (id) do update set pos = excluded.pos, doc = excluded.doc '
-        'where x.doc::text is distinct from excluded.doc::text or x.pos is distinct from excluded.pos', t) using spec->'upsert';
+        'where x.doc::text is distinct from excluded.doc::text', t) using spec->'upsert';
       get diagnostics up = row_count;
+      -- A record whose content is identical and only its place in the list moved (a new entry at the top of a feed pushes every
+      -- other entry down by one) needs no right to change the record: whoever can read it may move it.
+      execute format('select coalesce(array_agg(id), ''{}'') from public.%I where id in (select r->>''id'' from json_array_elements($1) r)', t)
+        into ids using spec->'upsert';
+      up := up + app.move_rows(t, spec->'upsert', ids);
     end if;
     res := res || jsonb_build_object(t, jsonb_build_object('upserted', up, 'deleted', del));
   end loop;

@@ -74,7 +74,7 @@ function MyWork({ me }: { me: Person }) {
                 {t('Tasks')}
                 <span className="font-medium text-mute">{rowCount}</span>
               </h3>
-              <div className="overflow-hidden rounded-card bg-surface shadow-card">
+              <div className="rounded-card bg-surface shadow-card">
                 <QuickAdd inCard />
                 <div className="pb-2">
                   <TaskGroups mine={mine} />

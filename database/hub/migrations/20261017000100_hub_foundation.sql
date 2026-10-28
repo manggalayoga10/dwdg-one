@@ -121,6 +121,21 @@ begin
                  where x->>'state' = 'joined' and pp.div is distinct from p.div and app.sees_div(pp.div))
       or exists (select 1 from public.tasks t where t.project = p.id and t.owner = me and not coalesce(t.trashed, false))));
 end $$;
+-- The same rule for a project row that is being checked as it is saved: the projects table's own select policy gets the row's
+-- own values, because a policy that looked the row up in the table could not see a row its statement is still inserting
+-- ("insert ... on conflict do update" checks the select policy on the new row, so creating a project was refused).
+create function app.can_see_project_row(pid text, p_org boolean, p_div text, p_lead text, p_pm text, p_doc json) returns boolean language plpgsql stable security definer set search_path = '' as $$
+declare me text := app.me_id();
+begin
+  if not app.me_active() then return false; end if;
+  return coalesce(p_org, false) or app.sees_div(p_div) or p_lead = me or p_pm = me
+    or exists (select 1 from json_array_elements(coalesce(p_doc->'team', '[]'::json)) x
+               where x->>'id' = me and coalesce(x->>'state', '') <> 'declined')
+    or exists (select 1 from json_array_elements(coalesce(p_doc->'team', '[]'::json)) x
+               join public.people pp on pp.id = x->>'id'
+               where x->>'state' = 'joined' and pp.div is distinct from p_div and app.sees_div(pp.div))
+    or exists (select 1 from public.tasks t where t.project = pid and t.owner = me and not coalesce(t.trashed, false));
+end $$;
 create function app.is_project_lead(pid text) returns boolean language plpgsql stable security definer set search_path = '' as $$
 begin
   return app.me_active() and exists (select 1 from public.projects p where p.id = pid and (p.lead = app.me_id() or p.pm = app.me_id()));

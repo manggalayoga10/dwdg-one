@@ -8,6 +8,17 @@ import { mayDelete, mayRead, mayUpsert, policyFor, type Lookup, type RowView } f
 import type { Changes, Row, RowsByTable } from '../workspace/partition.ts';
 import type { SpokeGateway } from './gateway.ts';
 
+/** Same content, whatever the order of the keys. */
+function sameJson(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => k in b && sameJson((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+
 /** Finds a row of the division by table and id in what was loaded. Unfiltered: a rule may look at a row its person cannot read. */
 function lookupIn(rows: RowsByTable): Lookup {
   const index = new Map<string, Map<string, RowView>>();
@@ -51,7 +62,11 @@ export async function authorizeDivisionChanges(
     const mine = (r: { id: string }) => table !== VALUES_TABLE || homeOfValue(r.id) === slug;
     for (const next of c.upsert ?? []) {
       const old = before.get(next.id);
-      if (!mine(next) || !mayUpsert(policy, p, old, next, lookup)) throw new HttpError(403, 'forbidden');
+      // A record sent with the same content and only a new place in the list (a new entry pushes the others down by one) is
+      // a re-ordering: whoever may read the record may move it. The database's apply_rows does the same.
+      const moved = old !== undefined && old.pos !== next.pos && sameJson(old.doc, next.doc);
+      const allowed = moved ? mayRead(policy, p, { id: old.id, doc: old.doc }, lookup) : mayUpsert(policy, p, old, next, lookup);
+      if (!mine(next) || !allowed) throw new HttpError(403, 'forbidden');
     }
     for (const id of c.delete ?? []) {
       const old = before.get(id);

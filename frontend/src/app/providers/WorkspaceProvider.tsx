@@ -12,6 +12,7 @@ import { setDemoClock } from '@/lib/time';
 import { demoWorkspace } from '@/lib/workspace/demo-seed';
 import { useStore } from '@/lib/store';
 import { createMemoryRepository } from '@/lib/workspace/memory-repository';
+import { compose } from '@/lib/workspace/shape';
 import { configureTransactions, loadWorkspace, workspaceStore } from '@/lib/workspace/transaction';
 import { linkedPerson } from '@/features/auth/services/auth';
 import { syncBoard } from '@/features/auth/services/session';
@@ -41,7 +42,17 @@ function Loader({ children }: { children: ReactNode }) {
         setPerson(null);
       });
   }, []);
-  const query = useQuery({ queryKey: ['workspace', person], queryFn: repository.load, enabled: person !== undefined });
+  // Nobody is signed in: there is nothing to load (the server and the database both refuse an anonymous read). Show the
+  // sign-in screen on an empty workspace; signing in reloads the page, which loads the real one.
+  const signedOut = !env.demo && person === null;
+  const query = useQuery({
+    queryKey: ['workspace', person],
+    queryFn: repository.load,
+    enabled: person !== undefined && !signedOut,
+  });
+  useEffect(() => {
+    if (signedOut) loadWorkspace(compose({}));
+  }, [signedOut]);
   useEffect(() => {
     if (!query.data) return;
     loadWorkspace(query.data);
