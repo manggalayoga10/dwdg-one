@@ -26,9 +26,6 @@ export const LATER = new Set([
   'budget',
   'register',
   'period-reviews',
-  'content',
-  'it-requests',
-  'accounts-register',
 ]);
 
 export const SIMPLE_PAGES = [

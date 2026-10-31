@@ -28,6 +28,7 @@ import {
   mcitDraft,
   mcitOf,
   mg,
+  contentTeams,
   stale,
   type ChannelId,
   type Content,
@@ -117,6 +118,7 @@ export async function createContent(f: NewContent) {
     task: null,
     corrections: [],
     fromBrief: f.fromBrief,
+    teams: contentTeams(getDb(), m.id, f.exec),
     history: [],
     createdBy: m.id,
     createdAt: nowStamp(),
@@ -428,5 +430,19 @@ export function exportContent() {
   return act(({ db, toast }) => {
     logChange(db, MC, 'exported content records', tgt('content', t('Content'), 'content'));
     toast(t('Content exported. Planned and actual dates stay in separate columns.'));
+  });
+}
+
+/** Communications types in how a published post did, one channel at a time. */
+export function recordMetrics(id: string, ch: ChannelId, reach: number, engagement: number) {
+  if (!Number.isFinite(reach) || !Number.isFinite(engagement) || reach < 0 || engagement < 0)
+    return Promise.resolve(false);
+  return act(({ db, toast }) => {
+    const c = contentOf(db, id);
+    const pub = c?.channels.find((x) => x.ch === ch)?.pub;
+    if (!c || !pub) return;
+    pub.metrics = { reach: Math.round(reach), engagement: Math.round(engagement) };
+    hist(c, 'Results recorded for {ch}', { ch: chName(ch) });
+    toast(t('Results saved'));
   });
 }

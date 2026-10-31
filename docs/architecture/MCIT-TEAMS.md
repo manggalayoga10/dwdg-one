@@ -1,6 +1,6 @@
 # MCIT: ruang Director dan tiga sub-tim
 
-Status: **rancangan, belum ada kode.** Ditulis 29 Oktober 2026 dari permintaan pemilik divisi. Dua keputusan sudah diambil pemilik: (1) sub-tim hidup **di dalam MCIT** (satu divisi, satu proyek Supabase, atribut sub-tim pada orang); (2) co-director **melihat seluruh MCIT dan mengubah hanya milik sub-timnya**, Director mengubah semuanya.
+Status (29 Oktober 2026): **sebagian sudah dibangun.** Sudah ada: atribut `team`, aturan akses di server dan SQL (keputusan M37), content tracker tampil dengan filter sub-tim, tiga halaman sub-tim (Creative, Communications, IT), metrik per publikasi, skrip `scripts/database/add-mcit-codirector.mjs`. Belum: akun tiga co-director (menunggu email dan pembagian sub-tim), papan tautan Member tanpa login, kontrol di aplikasi untuk mengatur `team` seseorang. Dua keputusan sudah diambil pemilik: (1) sub-tim hidup **di dalam MCIT** (satu divisi, satu proyek Supabase, atribut sub-tim pada orang); (2) co-director **melihat seluruh MCIT dan mengubah hanya milik sub-timnya**, Director mengubah semuanya.
 
 ## Siapa, dan akunnya
 
@@ -70,5 +70,9 @@ Halaman satu per sub-tim berisi tautan yang dikurasi (Drive, brief, template, ja
 
 ## Yang dibutuhkan dari pemilik
 - Email dan nama tiga co-director (Creative, Communications, IT).
-- Metrik performa: manual atau impor?
-- Papan tautan Member: daftar Drive biasa, atau halaman publik hanya-baca?
+- Pembagian sub-tim untuk Hanafi, Amnun Bintang, dan Manggala Yoga.
+- Papan tautan Member: diputuskan halaman publik hanya-baca tanpa login. Belum dibangun, lihat catatan di bawah.
+
+## Keputusan yang sudah diambil
+- Metrik performa: diisi manual per publikasi (jangkauan dan interaksi), di halaman Communications.
+- Papan tautan Member: halaman publik hanya-baca tanpa login. Perlu tabel baru, tautan berisi token acak yang disimpan sebagai hash, rate limit, dan cara mencabut tautan. Ini menambah permukaan publik dan perubahan database di hub, jadi dikerjakan sebagai langkah terpisah.

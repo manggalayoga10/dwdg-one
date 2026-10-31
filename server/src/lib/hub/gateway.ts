@@ -19,6 +19,8 @@ export interface PersonRecord {
   div: string | null;
   status: string | null;
   isAdmin: boolean;
+  /** The sub-team inside the division (`people.doc.team`: creative, comms, it), or null. */
+  team?: string | null;
 }
 
 export interface AuditEntry {
@@ -113,10 +115,10 @@ export function createHubGateway(config: Config): HubGateway {
       return { id: data.user.id, email: data.user.email ?? null };
     },
     async findPerson(token, authUserId) {
-      const reply: Reply<{ id: string; role: string | null; div: string | null; status: string | null; is_admin: boolean | null }> =
-        await asPerson(token).from('people').select('id, role, div, status, is_admin').eq('auth_user_id', authUserId).maybeSingle();
+      const reply: Reply<{ id: string; role: string | null; div: string | null; status: string | null; is_admin: boolean | null; team: string | null }> =
+        await asPerson(token).from('people').select('id, role, div, status, is_admin, team:doc->>team').eq('auth_user_id', authUserId).maybeSingle();
       const p = unwrap(reply);
-      return p ? { id: p.id, role: p.role, div: p.div, status: p.status, isAdmin: p.is_admin === true } : null;
+      return p ? { id: p.id, role: p.role, div: p.div, status: p.status, isAdmin: p.is_admin === true, team: p.team } : null;
     },
     async ledProjects(token, personId) {
       const reply: Reply<{ id: string }[]> = await asPerson(token)

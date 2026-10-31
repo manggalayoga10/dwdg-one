@@ -63,6 +63,9 @@ create function app.me_div() returns text language sql stable security definer s
   select div from public.people where auth_user_id = auth.uid() $$;
 create function app.me_role() returns text language sql stable security definer set search_path = '' as $$
   select role from public.people where auth_user_id = auth.uid() $$;
+-- The sub-team of the signed-in person inside their division (Marketing, Communication & IT: creative, comms, it), or null.
+create function app.me_team() returns text language sql stable security definer set search_path = '' as $$
+  select doc->>'team' from public.people where auth_user_id = auth.uid() $$;
 create function app.me_active() returns boolean language sql stable security definer set search_path = '' as $$
   select coalesce((select status = 'active' from public.people where auth_user_id = auth.uid()), false) $$;
 create function app.me_admin() returns boolean language sql stable security definer set search_path = '' as $$

@@ -40,6 +40,14 @@ import { RegisterCrumb, RegisterPage } from '@/features/fnl/components/RegisterP
 import { RequestsCrumb, RequestsPage } from '@/features/fnl/components/RequestsPage';
 import { AccountsCrumb, AccountsPage } from '@/features/mcit/components/AccountsPage';
 import { ContentCrumb, ContentPage } from '@/features/mcit/components/ContentPage';
+import {
+  CommsCrumb,
+  CommsPage,
+  CreativeCrumb,
+  CreativePage,
+  ItTeamCrumb,
+  ItTeamPage,
+} from '@/features/mcit/components/TeamPages';
 import { ItRequestsCrumb, ItRequestsPage } from '@/features/mcit/components/RequestsPage';
 import { InitiativesCrumb, InitiativesPage } from '@/features/strategy/components/InitiativesPage';
 import { DecisionsCrumb, DecisionsPage } from '@/features/strategy/components/DecisionsPage';
@@ -247,6 +255,24 @@ export const PAGES: Record<string, PageDef> = {
     source: 'divisions/div-fnl-mcit.js',
     component: ItRequestsPage,
     crumb: ItRequestsCrumb,
+  },
+  creative: {
+    module: 'marketing-it',
+    source: 'divisions/div-fnl-mcit.js',
+    component: CreativePage,
+    crumb: CreativeCrumb,
+  },
+  communications: {
+    module: 'marketing-it',
+    source: 'divisions/div-fnl-mcit.js',
+    component: CommsPage,
+    crumb: CommsCrumb,
+  },
+  'it-team': {
+    module: 'marketing-it',
+    source: 'divisions/div-fnl-mcit.js',
+    component: ItTeamPage,
+    crumb: ItTeamCrumb,
   },
   'accounts-register': {
     module: 'marketing-it',

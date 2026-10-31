@@ -21,6 +21,9 @@ const ME = 'app.me_id()';
 const sees = c => `app.sees_div(${c})`;
 const has = (key, who = ME) => `jsonb_exists(doc::jsonb->'${key}', ${who})`;
 const NB = 'not app.is_board()';
+// Marketing, Communication & IT: a Co-director changes only the records their sub-team is named on (doc.teams); the Director,
+// the President, the VP and the Admin change all; a Member keeps the division's rights.
+const mcWrite = `${sees("'mcit'")} and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or ${has('teams', 'app.me_team()')})`;
 const projectVisible = 'project is not null and app.can_see_project(project)';
 
 // The six workspaces' private data: members of the division, the President, the VP and the Admin (sees_div),
@@ -141,16 +144,16 @@ export const TABLES = [
   {name: 'fnl_periods', source: 'fnl.periods', cols: {project: 't', state: 't', prepared_by: 'preparedBy', reviewer: 't', created_by: 'createdBy'}, read: division('fnl')},
 
   // ---------- Marketing Communication & IT (the Board may read, like the prototype's mcFull) ----------
-  {name: 'mcit_campaigns', source: 'mcit.campaigns', cols: {owner: 't', project: 't', created_by: 'createdBy'}, read: `${sees("'mcit'")} or app.is_board()`, write: sees("'mcit'")},
+  {name: 'mcit_campaigns', source: 'mcit.campaigns', cols: {owner: 't', project: 't', created_by: 'createdBy'}, read: `${sees("'mcit'")} or app.is_board()`, write: mcWrite},
   {name: 'mcit_content', source: 'mcit.content', cols: {campaign: 't', executor: 't', reviewer: 't', stage: 't', created_by: 'createdBy'}, fk: {campaign: 'mcit_campaigns'},
-    read: `${sees("'mcit'")} or app.is_board()`, write: sees("'mcit'")},
+    read: `${sees("'mcit'")} or app.is_board()`, write: mcWrite},
   {name: 'mcit_briefs', source: 'mcit.briefs', cols: {unit: 't', requester: 't', approver: 't', state: 't', created_by: 'createdBy'},
     read: `${sees("'mcit'")} or app.is_board() or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`,
-    write: `${sees("'mcit'")} or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`},
+    write: `${mcWrite} or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`},
   {name: 'mcit_it', source: 'mcit.it', cols: {requester: 't', unit: 't', owner: 't', stage: 't', created_by: 'createdBy'},
     read: `${sees("'mcit'")} or app.is_board() or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`,
-    write: `${sees("'mcit'")} or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`},
-  {name: 'mcit_accounts', source: 'mcit.accounts', cols: {custodian: 't', backup: 't', hidden: ['hidden', 'b']}, read: `${sees("'mcit'")} or app.is_board()`, write: sees("'mcit'")},
+    write: `${mcWrite} or requester = ${ME} or created_by = ${ME} or app.unit_lead(unit)`},
+  {name: 'mcit_accounts', source: 'mcit.accounts', cols: {custodian: 't', backup: 't', hidden: ['hidden', 'b']}, read: `${sees("'mcit'")} or app.is_board()`, write: mcWrite},
 
   // ---------- Accounts and authority ----------
   {name: 'acct_invites', source: 'acct.invites', cols: {email: 'email', div: 't', role: 't', state: 't', person: 't', created_by: 'createdBy'},

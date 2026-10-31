@@ -30,6 +30,9 @@ import {
   CORDER,
   CST,
   MC,
+  TEAMS,
+  TEAM_LABEL,
+  teamOfPerson,
   canMakeContent,
   chName,
   cmpOf,
@@ -401,6 +404,7 @@ export function ContentPage({ route }: { route: Route }) {
   const m = useMe();
   const v = useUi((u) => u.view.mcv ?? 'calendar');
   const fc = useUi((u) => u.view.mccmp ?? 'all');
+  const ft = useUi((u) => u.view.mcteam ?? 'all');
   useDivisionWorkspace(MC);
   if (route.id === 'new') return <NewContentPage fromBrief={route.sub} />;
   if (!mcFull(m)) return <Unavailable />;
@@ -409,7 +413,11 @@ export function ContentPage({ route }: { route: Route }) {
     return c ? <ContentItemPage id={c.id} /> : <Unavailable />;
   }
   const s = mcitOf(db);
-  const items = s.content.filter((c) => fc === 'all' || (fc === 'none' ? !c.campaign : c.campaign === fc));
+  const mine = teamOfPerson(m);
+  const team = ft === 'mine' ? mine : TEAMS.find((x) => x === ft);
+  const items = s.content
+    .filter((c) => fc === 'all' || (fc === 'none' ? !c.campaign : c.campaign === fc))
+    .filter((c) => ft === 'all' || (team ? !!c.teams?.includes(team) : ft === 'mine' && false));
   return (
     <Page wide>
       <PageHeader
@@ -472,6 +480,24 @@ export function ContentPage({ route }: { route: Route }) {
               { value: 'all', label: t('All content') },
               ...s.campaigns.map((c) => ({ value: c.id, label: c.name })),
               { value: 'none', label: t('No campaign') },
+            ]}
+          />
+        </label>
+        <label className="inline-flex items-center gap-2 text-d13 text-mute">
+          {t('Sub-team')}
+          <SelectField
+            small
+            value={ft}
+            className="min-w-[160px]"
+            onChange={(k) => {
+              setUi((u) => {
+                u.view.mcteam = k;
+              });
+            }}
+            options={[
+              { value: 'all', label: t('All sub-teams') },
+              ...(mine ? [{ value: 'mine', label: t('My sub-team') }] : []),
+              ...TEAMS.map((x) => ({ value: x, label: t(TEAM_LABEL[x]) })),
             ]}
           />
         </label>

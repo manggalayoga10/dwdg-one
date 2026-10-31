@@ -46,6 +46,8 @@ export interface Persona {
   role: string | null;
   admin?: boolean;
   status?: string;
+  /** Sub-team inside Marketing, Communication & IT. */
+  team?: string;
 }
 
 /** Everyone the checks look at: every role, several divisions, a Board account, people who are not active. */
@@ -65,6 +67,11 @@ export const CAST: Persona[] = [
   { id: 'hr_cod', div: 'hr', role: 'codirector' },
   { id: 'hr_mem', div: 'hr', role: 'member' },
   { id: 'mem_mcit', div: 'mcit', role: 'member' },
+  { id: 'dir_mcit', div: 'mcit', role: 'director' },
+  { id: 'cod_cre', div: 'mcit', role: 'codirector', team: 'creative' },
+  { id: 'cod_com', div: 'mcit', role: 'codirector', team: 'comms' },
+  { id: 'cod_it', div: 'mcit', role: 'codirector', team: 'it' },
+  { id: 'cod_mcit', div: 'mcit', role: 'codirector' }, // no sub-team yet
   { id: 'cod_cons', div: 'cons', role: 'codirector' },
   { id: 'newbie', div: 'ee', role: 'member', status: 'pending' },
   { id: 'susp', div: 'sng', role: 'director', status: 'suspended' },
@@ -92,6 +99,7 @@ const personDoc = (p: Persona) => ({
   admin: p.admin ?? false,
   board: p.role === 'board',
   status: p.status ?? 'active',
+  ...(p.team ? { team: p.team } : {}),
 });
 
 /** The people and projects of the single-database schema, inserted as the owner of the database. */
@@ -143,7 +151,7 @@ export async function principalOf(personId: string): Promise<Principal> {
   const people = Object.fromEntries(
     CAST.map((p) => [
       `u-${p.id}`,
-      { id: p.id, role: p.role, div: p.div, status: p.status ?? 'active', isAdmin: p.admin ?? false },
+      { id: p.id, role: p.role, div: p.div, status: p.status ?? 'active', isAdmin: p.admin ?? false, team: p.team ?? null },
     ]),
   );
   const tokens = Object.fromEntries(CAST.map((p) => [`t-${p.id}`, `u-${p.id}`]));

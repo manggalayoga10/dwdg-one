@@ -1129,9 +1129,9 @@ create index mcit_campaigns_created_by_idx on public.mcit_campaigns (created_by)
 create trigger mcit_campaigns_touch before update on public.mcit_campaigns for each row execute function app.touch();
 alter table public.mcit_campaigns enable row level security;
 create policy mcit_campaigns_select on public.mcit_campaigns for select to authenticated using (app.me_active() and (app.sees_div('mcit') or app.is_board()));
-create policy mcit_campaigns_insert on public.mcit_campaigns for insert to authenticated with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_campaigns_update on public.mcit_campaigns for update to authenticated using (app.can_write() and (app.sees_div('mcit'))) with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_campaigns_delete on public.mcit_campaigns for delete to authenticated using (app.can_write() and (app.sees_div('mcit')));
+create policy mcit_campaigns_insert on public.mcit_campaigns for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_campaigns_update on public.mcit_campaigns for update to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())))) with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_campaigns_delete on public.mcit_campaigns for delete to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
 grant select, insert, update, delete on public.mcit_campaigns to authenticated, service_role;
 
 -- mcit_content  <-  db.mcit.content
@@ -1156,9 +1156,9 @@ create index mcit_content_created_by_idx on public.mcit_content (created_by);
 create trigger mcit_content_touch before update on public.mcit_content for each row execute function app.touch();
 alter table public.mcit_content enable row level security;
 create policy mcit_content_select on public.mcit_content for select to authenticated using (app.me_active() and (app.sees_div('mcit') or app.is_board()));
-create policy mcit_content_insert on public.mcit_content for insert to authenticated with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_content_update on public.mcit_content for update to authenticated using (app.can_write() and (app.sees_div('mcit'))) with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_content_delete on public.mcit_content for delete to authenticated using (app.can_write() and (app.sees_div('mcit')));
+create policy mcit_content_insert on public.mcit_content for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_content_update on public.mcit_content for update to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())))) with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_content_delete on public.mcit_content for delete to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
 grant select, insert, update, delete on public.mcit_content to authenticated, service_role;
 
 -- mcit_briefs  <-  db.mcit.briefs
@@ -1183,9 +1183,9 @@ create index mcit_briefs_created_by_idx on public.mcit_briefs (created_by);
 create trigger mcit_briefs_touch before update on public.mcit_briefs for each row execute function app.touch();
 alter table public.mcit_briefs enable row level security;
 create policy mcit_briefs_select on public.mcit_briefs for select to authenticated using (app.me_active() and (app.sees_div('mcit') or app.is_board() or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_briefs_insert on public.mcit_briefs for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_briefs_update on public.mcit_briefs for update to authenticated using (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit))) with check (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_briefs_delete on public.mcit_briefs for delete to authenticated using (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_briefs_insert on public.mcit_briefs for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_briefs_update on public.mcit_briefs for update to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit))) with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_briefs_delete on public.mcit_briefs for delete to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
 grant select, insert, update, delete on public.mcit_briefs to authenticated, service_role;
 
 -- mcit_it  <-  db.mcit.it
@@ -1210,9 +1210,9 @@ create index mcit_it_created_by_idx on public.mcit_it (created_by);
 create trigger mcit_it_touch before update on public.mcit_it for each row execute function app.touch();
 alter table public.mcit_it enable row level security;
 create policy mcit_it_select on public.mcit_it for select to authenticated using (app.me_active() and (app.sees_div('mcit') or app.is_board() or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_it_insert on public.mcit_it for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_it_update on public.mcit_it for update to authenticated using (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit))) with check (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
-create policy mcit_it_delete on public.mcit_it for delete to authenticated using (app.can_write() and (app.sees_div('mcit') or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_it_insert on public.mcit_it for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_it_update on public.mcit_it for update to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit))) with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
+create policy mcit_it_delete on public.mcit_it for delete to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())) or requester = app.me_id() or created_by = app.me_id() or app.unit_lead(unit)));
 grant select, insert, update, delete on public.mcit_it to authenticated, service_role;
 
 -- mcit_accounts  <-  db.mcit.accounts
@@ -1232,9 +1232,9 @@ create index mcit_accounts_backup_idx on public.mcit_accounts (backup);
 create trigger mcit_accounts_touch before update on public.mcit_accounts for each row execute function app.touch();
 alter table public.mcit_accounts enable row level security;
 create policy mcit_accounts_select on public.mcit_accounts for select to authenticated using (app.me_active() and (app.sees_div('mcit') or app.is_board()));
-create policy mcit_accounts_insert on public.mcit_accounts for insert to authenticated with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_accounts_update on public.mcit_accounts for update to authenticated using (app.can_write() and (app.sees_div('mcit'))) with check (app.can_write() and (app.sees_div('mcit')));
-create policy mcit_accounts_delete on public.mcit_accounts for delete to authenticated using (app.can_write() and (app.sees_div('mcit')));
+create policy mcit_accounts_insert on public.mcit_accounts for insert to authenticated with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_accounts_update on public.mcit_accounts for update to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team())))) with check (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
+create policy mcit_accounts_delete on public.mcit_accounts for delete to authenticated using (app.can_write() and (app.sees_div('mcit') and (app.rank() >= 3 or app.me_role() is distinct from 'codirector' or jsonb_exists(doc::jsonb->'teams', app.me_team()))));
 grant select, insert, update, delete on public.mcit_accounts to authenticated, service_role;
 
 -- acct_invites  <-  db.acct.invites

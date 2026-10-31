@@ -87,6 +87,7 @@ export async function submitIt(f: NewIt) {
     resolution: null,
     confirm: null,
     priv: '',
+    teams: ['it'],
     history: [],
     createdBy: m.id,
     createdAt: nowStamp(),
@@ -127,6 +128,7 @@ export async function submitBrief(f: NewBrief) {
     state: 'submitted',
     content: null,
     returnNote: '',
+    teams: ['comms'],
     createdBy: m.id,
     createdAt: nowStamp(),
   };

@@ -6,11 +6,35 @@ import { rank } from '@/lib/access';
 import { daysBetween } from '@/lib/time';
 import { isBoardP, isTopP, unitLead, type HistoryRow } from '@/features/fnl/services/fnl-data';
 import type { StateDef } from '@/features/external/services/ee-data';
-import type { DateStr, DivisionId, FeatureStore, Person, PersonId, Stamp, Workspace } from '@/types/workspace';
+import type {
+  DateStr,
+  DivisionId,
+  FeatureStore,
+  McitTeam,
+  Person,
+  PersonId,
+  Stamp,
+  Workspace,
+} from '@/types/workspace';
 
 export const MC: DivisionId = 'mcit';
 export { isBoardP, isTopP, unitLead };
-export type { HistoryRow };
+export type { HistoryRow, McitTeam };
+
+export const TEAMS: readonly McitTeam[] = ['creative', 'comms', 'it'];
+export const TEAM_LABEL: Record<McitTeam, string> = { creative: 'Creative', comms: 'Communications', it: 'IT' };
+
+/** The sub-teams on a new content item: whoever makes it, whoever executes it, and Communications, which owns the plan and
+    records how each post did. */
+export function contentTeams(db: Workspace, maker: PersonId, executor: PersonId): McitTeam[] {
+  return TEAMS.filter((tm) => tm === 'comms' || teamsOf(db, maker, executor).includes(tm));
+}
+
+/** The sub-teams of the people named, each once, in the fixed order. A person without one adds nothing. */
+export function teamsOf(db: Workspace, ...ids: (PersonId | null | undefined)[]): McitTeam[] {
+  const found = new Set(ids.map((id) => db.people.find((p) => p.id === id)?.team));
+  return TEAMS.filter((tm) => found.has(tm));
+}
 
 // ---------- types ----------
 export type ChannelId = 'instagram' | 'linkedin' | 'website';
@@ -34,6 +58,8 @@ export interface Campaign {
   project: string | null;
   createdBy: PersonId;
   createdAt: Stamp;
+  /** The sub-teams that work on it. A Co-director changes only records that name their sub-team. */
+  teams?: McitTeam[];
 }
 export interface Publication {
   url: string;
@@ -43,6 +69,8 @@ export interface Publication {
   v: number | null;
   note: string;
   recordedAt: Stamp;
+  /** How the post did, typed in by Communications after it was published. */
+  metrics?: { reach: number; engagement: number };
 }
 export interface ContentChannel {
   ch: ChannelId;
@@ -80,6 +108,8 @@ export interface Content {
   history: HistoryRow[];
   createdBy: PersonId;
   createdAt: Stamp;
+  /** The sub-teams that work on it. A Co-director changes only records that name their sub-team. */
+  teams?: McitTeam[];
 }
 export interface ItRequest {
   id: string;
@@ -106,6 +136,8 @@ export interface ItRequest {
   history: HistoryRow[];
   createdBy: PersonId;
   createdAt: Stamp;
+  /** The sub-teams that work on it. A Co-director changes only records that name their sub-team. */
+  teams?: McitTeam[];
 }
 export interface Brief {
   id: string;
@@ -127,6 +159,8 @@ export interface Brief {
   acceptedAt?: Stamp;
   createdBy: PersonId;
   createdAt: Stamp;
+  /** The sub-teams that work on it. A Co-director changes only records that name their sub-team. */
+  teams?: McitTeam[];
 }
 export interface Account {
   id: string;
@@ -141,6 +175,8 @@ export interface Account {
   verifiedAt: DateStr | null;
   hidden: boolean;
   request?: string | null;
+  /** The sub-teams that work on it. A Co-director changes only records that name their sub-team. */
+  teams?: McitTeam[];
 }
 export interface McitStore extends FeatureStore {
   grants: Record<McGrant, PersonId[]>;
@@ -227,6 +263,16 @@ export const mg = (db: Workspace, g: McGrant, id: PersonId | undefined) =>
   !!id && (mcitOf(db).grants[g] as PersonId[] | undefined)?.includes(id) === true;
 export const mcIn = (p: Person | undefined) => !!p && p.div === MC;
 export const mcFull = (p: Person | undefined) => mcIn(p) || isTopP(p) || isBoardP(p);
+export const teamOfPerson = (p: Person | undefined): McitTeam | undefined => TEAMS.find((tm) => tm === p?.team);
+/** database/schema/schema-spec.mjs `mcWrite`: a Co-director changes only the records their sub-team is named on; the Director,
+    the President, the VP and the Admin change all; a Member keeps the division's rights. The server and the database decide;
+    this only hides what would be refused. */
+export function mcWrite(p: Person | undefined, rec: { teams?: McitTeam[] }): boolean {
+  if (!p || !(mcIn(p) || isTopP(p) || p.admin)) return false;
+  if (rank(p) >= 3 || p.role !== 'codirector') return true;
+  const tm = teamOfPerson(p);
+  return tm !== undefined && !!rec.teams?.includes(tm);
+}
 export const mcLead = (p: Person | undefined) => !!p && ((p.div === MC && rank(p) >= 2) || p.admin);
 export const canMakeContent = (db: Workspace, p: Person | undefined) =>
   mcLead(p) || mg(db, 'review', p?.id) || mg(db, 'publish', p?.id);

@@ -19,6 +19,8 @@ export interface Principal {
   personId: string | null;
   role: RoleId | null;
   div: DivisionId | null;
+  /** The sub-team inside the division (`app.me_team()`: creative, comms, it), or null. */
+  team: string | null;
   status: string | null;
   /** Signed in and linked, and the person's status is `active`. */
   active: boolean;
@@ -60,6 +62,7 @@ export async function resolvePrincipal(hub: HubGateway, token: string | null): P
     personId: person?.id ?? null,
     role,
     div: isDivision(rawDiv) ? rawDiv : null,
+    team: person?.team ?? null,
     status: person?.status ?? null,
     active,
     admin,

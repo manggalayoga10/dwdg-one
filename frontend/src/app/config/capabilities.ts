@@ -67,6 +67,9 @@ export const CAPS: Record<'*' | DivisionId, Capability[]> = {
   ],
   mcit: [
     { page: 'content', icon: 'calendar', label: 'Content' },
+    { page: 'creative', icon: 'edit', label: 'Creative' },
+    { page: 'communications', icon: 'updates', label: 'Communications' },
+    { page: 'it-team', icon: 'globe', label: 'IT' },
     { page: 'it-requests', icon: 'documents', label: 'Requests' },
     { page: 'accounts-register', icon: 'shield', label: 'Accounts' },
   ],

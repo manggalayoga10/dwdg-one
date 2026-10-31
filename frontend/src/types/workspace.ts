@@ -12,6 +12,9 @@ export type DateStr = string;
 /** `YYYY-MM-DDTHH:mm` */
 export type Stamp = string;
 
+/** The sub-teams inside Marketing, Communication & IT. */
+export type McitTeam = 'creative' | 'comms' | 'it';
+
 export interface Person {
   id: PersonId;
   name: string;
@@ -30,6 +33,8 @@ export interface Person {
   phone?: string | null;
   hidePhone?: boolean;
   email?: string;
+  /** The sub-team inside the division (Marketing, Communication & IT only). */
+  team?: McitTeam | null;
   /** Set when the member finished the first-sign-in welcome page. */
   welcomedAt?: Stamp;
   /** The last day of a membership that ended (left or alumni). */

@@ -11,6 +11,9 @@ const requestVariants = (me: { id: string; div: string | null }) => [
   { unit: me.div, requester: 'someone_else' },
   { unit: 'cons' },
   { owner: me.id },
+  { teams: ['creative'] },
+  { teams: ['comms'] },
+  { teams: ['it'] },
 ];
 const requestChanges = (me: { id: string; div: string | null }) => [
   { note: 'x' },
@@ -18,15 +21,20 @@ const requestChanges = (me: { id: string; div: string | null }) => [
   { createdBy: me.id },
   { unit: me.div },
   { requester: null, createdBy: null, unit: null },
+  { teams: ['creative'] },
+  { teams: ['it'] },
 ];
+
+/** A record names the sub-teams that work on it; a Co-director changes only records that name theirs. */
+const teamVariants = [{ teams: ['creative'] }, { teams: ['comms'] }, { teams: ['it'] }, { teams: ['creative', 'comms'] }, { teams: [] }];
 
 parityTests([
   {
     name: 'mcit_campaigns',
     rows: [row('c_plain', { owner: 'mem_mcit', createdBy: 'mem_mcit' }), row('c_other', { owner: 'dir_ee' })],
     noDelete: ['c_plain'], // content points at it
-    variants: (me) => [{}, { owner: me.id }, { createdBy: me.id }],
-    changes: (me) => [{ note: 'x' }, { owner: me.id }],
+    variants: (me) => [{}, { owner: me.id }, { createdBy: me.id }, ...teamVariants],
+    changes: (me) => [{ note: 'x' }, { owner: me.id }, { teams: ['it'] }],
   },
   {
     name: 'mcit_content',
@@ -34,8 +42,8 @@ parityTests([
       row('ct_a', { campaign: 'c_plain', executor: 'mem_mcit', reviewer: 'dir_ee', createdBy: 'mem_mcit' }),
       row('ct_b', { campaign: 'c_plain' }),
     ],
-    variants: (me) => [{}, { campaign: 'c_plain' }, { executor: me.id }, { createdBy: me.id }],
-    changes: (me) => [{ note: 'x' }, { executor: me.id }, { createdBy: me.id }],
+    variants: (me) => [{}, { campaign: 'c_plain' }, { executor: me.id }, { createdBy: me.id }, ...teamVariants],
+    changes: (me) => [{ note: 'x' }, { executor: me.id }, { createdBy: me.id }, { teams: ['creative', 'comms'] }, { teams: null }],
   },
   {
     name: 'mcit_briefs',
@@ -64,7 +72,7 @@ parityTests([
   {
     name: 'mcit_accounts',
     rows: [row('a_one', { custodian: 'mem_mcit', backup: 'dir_ee', hidden: false }), row('a_hid', { hidden: true })],
-    variants: (me) => [{}, { custodian: me.id }, { hidden: true }],
-    changes: (me) => [{ note: 'x' }, { custodian: me.id }, { hidden: true }],
+    variants: (me) => [{}, { custodian: me.id }, { hidden: true }, ...teamVariants],
+    changes: (me) => [{ note: 'x' }, { custodian: me.id }, { hidden: true }, { teams: ['comms'] }],
   },
 ]);
