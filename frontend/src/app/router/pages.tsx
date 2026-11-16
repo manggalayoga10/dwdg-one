@@ -24,6 +24,7 @@ import {
 import { AttentionCrumb, AttentionPage } from '@/features/performance/components/AttentionPage';
 import { OversightCrumb, OversightPage } from '@/features/performance/components/OversightPage';
 import { PerformanceCrumb, PerformancePage } from '@/features/performance/components/PerformancePage';
+import { OrgDashboardCrumb, OrgDashboardPage } from '@/features/performance/components/OrgDashboardPage';
 import { AttendanceCrumb, AttendancePage } from '@/features/hr/components/AttendancePage';
 import { MonitoringCrumb, MonitoringPage } from '@/features/hr/components/MonitoringPage';
 import { HrPeopleCrumb, HrPeoplePage } from '@/features/hr/components/HrPeoplePage';
@@ -129,6 +130,13 @@ export const PAGES: Record<string, PageDef> = {
     source: 'screens/perf.js',
     component: PerformancePage,
     crumb: PerformanceCrumb,
+  },
+  // New in React (Strategy & Growth brief, decision M39): no prototype reference.
+  dashboard: {
+    module: 'performance',
+    source: 'features/performance (new)',
+    component: OrgDashboardPage,
+    crumb: OrgDashboardCrumb,
   },
   attention: { module: 'performance', source: 'screens/perf.js', component: AttentionPage, crumb: AttentionCrumb },
   oversight: { module: 'performance', source: 'screens/perf.js', component: OversightPage, crumb: OversightCrumb },
